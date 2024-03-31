@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Login or Create User">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login or Create User</title>
+</head>
+<body>
+  <h2>Login or Create User</h2>
+
+  <!-- Login Form -->
+  <form id="loginForm" method="POST" action="userNameCheck.php">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <button type="submit">Login</button>
+  </form>
+
+  <!-- Create User Form -->
+  <form id="createUserForm" method="POST" style="margin-top: 20px;">
+    <label for="newUsername">New Username:</label>
+    <input type="text" id="newUsername" name="newUsername" required>
+    <button type="submit">Create User</button>
+  </form>
+</body>
+</html>
+
+
