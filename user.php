@@ -192,10 +192,6 @@ window.onload = function() {
 };
 
 
-  function onButtonClick() {
-    connectDevice();
-  }
-
 </script>
 
 
@@ -214,13 +210,52 @@ window.onload = function() {
 </script>
 
 <script>
+
+async function streamData() {
+    let filters = [
+        { name: "Generate ECE Muscle Recovery" },
+        { services: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b"] }
+    ];
+
+    let options = { filters: filters };
+
+    log('Requesting Bluetooth Device...');
+    log('with ' + JSON.stringify(options));
+
+    try {
+      device = await navigator.bluetooth.requestDevice(options);
+      log('Connecting to GATT Server...');
+      server = await device.gatt.connect();
+      log('Getting Service...');
+      service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+      log('Getting Characteristics...');
+      characteristics = await Promise.all([
+          service.getCharacteristic("f392f003-1c58-4017-9e01-bf89c7eb53bd"), // Offload Data
+          service.getCharacteristic("a5b17d6a-68e5-4f33-abe0-e393e4cd7305"), // Datetime
+          service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8"),  // Data
+          service.getCharacteristic("87ffeadd-3d01-45cd-89bd-ec5a6880c009")
+      ]);
+      offloadDataChar = characteristics[0];
+      offloadDateTimeChar = characteristics[1];
+      streamDataChar = characteristics[2];
+      sessionStartChar = characteristics[3];
+      log('Characteristics found. Adding event listeners...');
+      streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
+      await offloadDataChar.readValue();
+      await offloadDateTimeChar.readValue();//[offloadDataChar, offloadDateTimeChar, streamDataChar]
+      connected = true;
+    } catch (error) {
+      console.error('Bluetooth Error:', error);
+    }
+  }
+
   document.querySelector('form').addEventListener('submit', function (event) {
     event.stopPropagation();
     event.preventDefault();
 
     if (isWebBluetoothEnabled()) {
       ChromeSamples.clearLog();
-      onButtonClick();
+      streamData();
     }
   });
 
