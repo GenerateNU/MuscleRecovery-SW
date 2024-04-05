@@ -8,8 +8,11 @@ let offloadDataChar;
 let offloadDateTimeChar;
 let streamDataChar;
 let sessionStartChar;
+let offloadSessionCountChar;
 let offloadedDataSize = 10;
 let offloadedDateTimeSize = 6;
+let offloadedSessionCountSize = 4;
+let numSessions;
 
 
 function handleStreamingData(event) {
@@ -45,6 +48,18 @@ function handleOffloadDateTime(event) {
     log("Offloaded Datetime:" + offloadedDateTime[i]);
   }
 }
+
+let offloadedSessionCount = new Uint8Array(offloadedSessionCountSize);
+function handleOffloadSessionCount(event) {
+  let characteristicValue = event.target.value;
+  for (let i = 0; i < offloadedSessionCountSize; i++) {
+    offloadedSessionCount[i] = characteristicValue.getUint8(i);
+  }
+  let numSessions = offloadedSessionCount[0] + (offloadedSessionCount[1] * 100) + 
+    (offloadedSessionCount[2] * 10000) + (offloadedSessionCount[3] * 1000000);
+  log("Offloaded Session Count: " + numSessions);
+}
+
 
 async function sendSessionValue(val) {
     try {
