@@ -49,6 +49,11 @@
   <button>Connect Wearable</button>
 </form>
 
+<!-- Create User Form -->
+<form id="offloadDataForm" name="offloadDataForm">
+  <button type="submit">Offload Data</button>
+</form>
+
 
 
 <script>
@@ -101,94 +106,6 @@
 </script>
 
 <script>
-async function offloadData() {
-    let filters = [
-        { name: "Generate ECE Muscle Recovery" },
-        { services: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b"] }
-    ];
-
-    let options = { filters: filters };
-
-    log('Requesting Bluetooth Device...');
-    log('with ' + JSON.stringify(options));
-
-    try {
-        device = await navigator.bluetooth.requestDevice(options);
-        log('Connecting to GATT Server...');
-        server = await device.gatt.connect();
-        log('Getting Service...');
-        service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
-        log('Getting Characteristics...');
-        characteristics = await Promise.all([
-            service.getCharacteristic("f392f003-1c58-4017-9e01-bf89c7eb53bd"), // Offload Data
-            service.getCharacteristic("a5b17d6a-68e5-4f33-abe0-e393e4cd7305"), // Datetime
-            service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8"), // Data
-            service.getCharacteristic("87ffeadd-3d01-45cd-89bd-ec5a6880c009"),
-            service.getCharacteristic("630f3455-b378-4b93-8cf5-79225891f94c") // Offload session count
-        ]);
-        offloadDataChar = characteristics[0];
-        offloadDateTimeChar = characteristics[1];
-        streamDataChar = characteristics[2];
-        sessionStartChar = characteristics[3];
-        offloadSessionCountChar = characteristics[4];
-        log('Characteristics found. Adding event listeners...');
-
-        // Add event listeners for characteristics
-        await Promise.all([
-            // session count must be offloaded first to construct nested array of offloaded data with number of offloaded sessions 
-            offloadSessionCountChar.addEventListener('characteristicvaluechanged', handleOffloadSessionCount),
-            offloadDataChar.addEventListener('characteristicvaluechanged', handleOffloadData),
-            offloadDateTimeChar.addEventListener('characteristicvaluechanged', handleOffloadDateTime)
-        ]);
-
-        log("Event listeners added");
-
-        // Read the characteristic values after all event listeners have been added
-        await offloadSessionCountChar.readValue();
-        await offloadDataChar.readValue();
-        await offloadDateTimeChar.readValue();
-        connected = true;
-    } catch (error) {
-        console.error('Bluetooth Error:', error);
-    }
-    
-}
-
-
-    
-// Add an event listener to the "Connect Wearable" button
-async function offloadDataAndSendRequest() {
-    try {
-        // Call offloadData function
-        await offloadData();
-
-        // Create a new XMLHttpRequest object
-        var xhr = new XMLHttpRequest();
-
-        // Configure the request
-        xhr.open("POST", "offloadData.php", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-        // Set up a callback function to handle the response
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    console.log("Data sent successfully!");
-                } else {
-                    console.error("Error sending data: " + xhr.statusText);
-                }
-            }
-        };
-
-        // Prepare the data to be sent
-        var data = "offloadedData=" + JSON.stringify(offloadedData) + "&offloadedDateTime=" + JSON.stringify(offloadedDateTime);
-
-        // Send the request
-        xhr.send(data);
-    } catch (error) {
-        console.error('Error in offloadDataAndSendRequest:', error);
-    }
-}
 
 // Add an event listener to the "Connect Wearable" button
 document.querySelector('form').addEventListener('submit', function (event) {
@@ -197,11 +114,39 @@ document.querySelector('form').addEventListener('submit', function (event) {
 
     if (isWebBluetoothEnabled()) {
         ChromeSamples.clearLog();
-        offloadDataAndSendRequest();
+        offloadData();
     }
 });
 
+ // Add an event listener to the "Offload Data" button
+ document.getElementById('offloadDataForm').addEventListener('submit', function (event) {
+    event.preventDefault(); // Prevent the default form submission behavior
 
+    // Create a form element
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'offloadData.php';
+
+    // TODO: Only passing in first session
+    for (let session = 0; session < numSessions; session++) {
+      // Create hidden input fields to store offloadedData and offloadedDateTime
+      const offloadedDataInput = document.createElement('input'); // Changed from 'offloadedData' to 'input'
+      offloadedDataInput.type = 'hidden'; // Added type attribute
+      offloadedDataInput.name = 'offloadedData'; // Added name attribute
+      offloadedDataInput.value = JSON.stringify(offloadedData[session]); // Convert offloadedData to JSON string
+      form.appendChild(offloadedDataInput);
+
+      const offloadedDateTimeInput = document.createElement('input'); // Changed from 'offloadedDateTime' to 'input'
+      offloadedDateTimeInput.type = 'hidden'; // Added type attribute
+      offloadedDateTimeInput.name = 'offloadedDateTime'; // Added name attribute
+      offloadedDateTimeInput.value = JSON.stringify(offloadedDateTime[session]); // Convert offloadedDateTime to JSON string
+      form.appendChild(offloadedDateTimeInput);
+
+      // Append the form to the document body and submit it
+      document.body.appendChild(form);
+      form.submit();
+    }
+});
 
 </script>
 

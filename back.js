@@ -16,6 +16,98 @@ let numSessions;
 let offloadedData;
 let offloadedDateTime;
 
+async function streamData() {
+  let filters = [
+      { name: "Generate ECE Muscle Recovery" },
+      { services: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b"] }
+  ];
+
+  let options = { filters: filters };
+
+  log('Requesting Bluetooth Device...');
+  log('with ' + JSON.stringify(options));
+
+  try {
+    device = await navigator.bluetooth.requestDevice(options);
+    log('Connecting to GATT Server...');
+    server = await device.gatt.connect();
+    log('Getting Service...');
+    service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+    log('Getting Characteristics...');
+    characteristics = await Promise.all([
+        service.getCharacteristic("f392f003-1c58-4017-9e01-bf89c7eb53bd"), // Offload Data
+        service.getCharacteristic("a5b17d6a-68e5-4f33-abe0-e393e4cd7305"), // Datetime
+        service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8"),  // Data
+        service.getCharacteristic("87ffeadd-3d01-45cd-89bd-ec5a6880c009")
+    ]);
+    offloadDataChar = characteristics[0];
+    offloadDateTimeChar = characteristics[1];
+    streamDataChar = characteristics[2];
+    sessionStartChar = characteristics[3];
+    log('Characteristics found. Adding event listeners...');
+    streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
+    await offloadDataChar.readValue();
+    await offloadDateTimeChar.readValue();//[offloadDataChar, offloadDateTimeChar, streamDataChar]
+    connected = true;
+  } catch (error) {
+    console.error('Bluetooth Error:', error);
+  }
+}
+
+async function offloadData() {
+  let filters = [
+      { name: "Generate ECE Muscle Recovery" },
+      { services: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b"] }
+  ];
+
+  let options = { filters: filters };
+
+  log('Requesting Bluetooth Device...');
+  log('with ' + JSON.stringify(options));
+
+  try {
+      device = await navigator.bluetooth.requestDevice(options);
+      log('Connecting to GATT Server...');
+      server = await device.gatt.connect();
+      log('Getting Service...');
+      service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+      log('Getting Characteristics...');
+      characteristics = await Promise.all([
+          service.getCharacteristic("f392f003-1c58-4017-9e01-bf89c7eb53bd"), // Offload Data
+          service.getCharacteristic("a5b17d6a-68e5-4f33-abe0-e393e4cd7305"), // Datetime
+          service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8"), // Data
+          service.getCharacteristic("87ffeadd-3d01-45cd-89bd-ec5a6880c009"),
+          service.getCharacteristic("630f3455-b378-4b93-8cf5-79225891f94c") // Offload session count
+      ]);
+      offloadDataChar = characteristics[0];
+      offloadDateTimeChar = characteristics[1];
+      streamDataChar = characteristics[2];
+      sessionStartChar = characteristics[3];
+      offloadSessionCountChar = characteristics[4];
+      log('Characteristics found. Adding event listeners...');
+
+      // Add event listeners for characteristics
+      await Promise.all([
+          // session count must be offloaded first to construct nested array of offloaded data with number of offloaded sessions 
+          offloadSessionCountChar.addEventListener('characteristicvaluechanged', handleOffloadSessionCount),
+          offloadDataChar.addEventListener('characteristicvaluechanged', handleOffloadData),
+          offloadDateTimeChar.addEventListener('characteristicvaluechanged', handleOffloadDateTime)
+      ]);
+
+      log("Event listeners added");
+
+      // Read the characteristic values after all event listeners have been added
+      await offloadSessionCountChar.readValue();
+      await offloadDataChar.readValue();
+      await offloadDateTimeChar.readValue();
+      connected = true;
+  } catch (error) {
+      console.error('Bluetooth Error:', error);
+  }
+  
+}
+
+
 function uint8ArrayToStringArray(uint8Array) {
   // Define an array to store the resulting strings
   let stringArray = [];
@@ -23,14 +115,9 @@ function uint8ArrayToStringArray(uint8Array) {
   // Iterate over each array in the 2D array
   for (let i = 0; i < uint8Array.length; i++) {
       let currentArray = uint8Array[i];
-      let string = '';
-
-      // Iterate over each element in the current array
-      for (let j = 0; j < currentArray.length; j++) {
-          // Convert Uint8 value to its corresponding character representation
-          string += String.fromCharCode(currentArray[j]);
-      }
+      let string = currentArray.toString();
       stringArray.push(string);
+      log(string);
   }
 
   return stringArray;
@@ -57,6 +144,7 @@ function uint8ArrayToDateTimeArray(uint8Array) {
 
       // Push the resulting datetime string to the dateTimeArray
       dateTimeArray.push(datetime);
+      log(datetime);
   }
 
   return dateTimeArray;
@@ -98,7 +186,6 @@ function handleOffloadData(event) {
     offloadedData[session] = [];
     for (let i = 0; i < offloadedDataSize; i++) {
       offloadedData[session][i] = characteristicValue.getUint8(i + (session * offloadedDataSize));
-      log("Offloaded Data:" + offloadedData[session][i]);
     }
   }
   offloadedData = uint8ArrayToStringArray(offloadedData);
@@ -111,7 +198,6 @@ function handleOffloadDateTime(event) {
     offloadedDateTime[session] = [];
     for (let i = 0; i < offloadedDateTimeSize; i++) {
       offloadedDateTime[session][i] = characteristicValue.getUint8(i + (session * offloadedDateTimeSize));
-      log("Offloaded Datetime:" + offloadedDateTime[session][i]);
     }
   }
   offloadedDateTime = uint8ArrayToDateTimeArray(offloadedDateTime);

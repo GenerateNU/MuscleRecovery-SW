@@ -14,6 +14,7 @@ if ($mysqli->connect_errno) {
 
 // Function to insert data into the database
 function insertDataIntoDatabase($mysqli, $offloadedData, $offloadedDateTime) {
+
     // Prepare a SQL statement to insert data
     $insertSql = "INSERT INTO data (userName, dateTime, muscleData) VALUES (?, ?, ?)";
 
@@ -22,24 +23,18 @@ function insertDataIntoDatabase($mysqli, $offloadedData, $offloadedDateTime) {
         // Placeholder username
         $username = "Placeholder";
 
-        // Loop through offloadedData and offloadedDateTime arrays
-        for ($i = 0; $i < count($offloadedData); $i++) {
-            // Loop through each element in the nested arrays
-            for ($j = 0; $j < count($offloadedData[$i]); $j++) {
-                // Get data from offloadedData and offloadedDateTime arrays
-                $muscleData = $offloadedData[$i][$j];
-                $dateTime = $offloadedDateTime[$i][$j];
+        // Get data from offloadedData and offloadedDateTime arrays
+        $muscleData = $offloadedData[$i];
+        $dateTime = $offloadedDateTime[$i];
 
-                // Binding parameters
-                $insertStmt->bind_param("sss", $username, $dateTime, $muscleData);
+        // Binding parameters
+        $insertStmt->bind_param("sss", $username, $dateTime, $muscleData);
 
-                // Executing the statement
-                if ($insertStmt->execute()) {
-                    echo "Data inserted successfully.";
-                } else {
-                    echo "Error inserting data: " . $insertStmt->error;
-                }
-            }
+        // Executing the statement
+        if ($insertStmt->execute()) {
+            echo "Data inserted successfully.";
+        } else {
+            echo "Error inserting data: " . $insertStmt->error;
         }
 
         // Closing the statement

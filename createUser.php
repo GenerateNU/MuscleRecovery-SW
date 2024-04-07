@@ -82,7 +82,7 @@ if(isset($_POST['newUsername'])) {
                     // Executing the statement
                     if ($insertStmt->execute()) {
                         echo "New user created successfully!";
-                        header("Location: user.html?username=" . $newUsername);
+                        header("Location: user.php?username=" . $newUsername);
                         exit;
                     } else {
                         echo "Error creating new user: " . $insertStmt->error;
