@@ -8,7 +8,7 @@
 
   <script src = "back.js"></script>
 
-    <h2>Welcome, <span id="username"></span>!</h2>
+    <h2>Welcome, ADMIN!</h2>
 
   <script>
     // Retrieve username from URL parameters
@@ -36,37 +36,6 @@
 </head>
 
 <body>
-
-<?php
-
-$host = "localhost";
-$username = "root";
-$user_pass = "usbw";
-$database_in_use = "test";
-
-$mysqli = new mysqli($host, $username, $user_pass, $database_in_use);
-
-if ($mysqli->connect_errno) {
-   echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
-}
-
-echo $mysqli->host_info . "\n";
-
-
-$sql = "SELECT userName, muscleData, dateTime FROM data";
-$result = $mysqli->query($sql);
-
-if ($result->num_rows > 0) {
-  // output data of each row
-  while($row = $result->fetch_assoc()) {
-    echo "userName: " . $row["userName"]. " - muscleData: " . $row["muscleData"]. " " . $row["dateTime"]. "<br>";
-  }
-} else {
-  echo "0 results";
-}
-$mysqli->close();
-
-?>
 
 
 <h1>Unidentified Data</h1>
@@ -164,7 +133,6 @@ async function offloadData() {
         offloadSessionCountChar = characteristics[4];
         log('Characteristics found. Adding event listeners...');
 
-        //TODO: NO IDEA WHY THE EVENT LISTENERS ARE NOT ADDED
         // Add event listeners for characteristics
         await Promise.all([
             // session count must be offloaded first to construct nested array of offloaded data with number of offloaded sessions 
@@ -183,19 +151,57 @@ async function offloadData() {
     } catch (error) {
         console.error('Bluetooth Error:', error);
     }
+    
 }
 
 
     
-  document.querySelector('form').addEventListener('submit', function (event) {
+// Add an event listener to the "Connect Wearable" button
+async function offloadDataAndSendRequest() {
+    try {
+        // Call offloadData function
+        await offloadData();
+
+        // Create a new XMLHttpRequest object
+        var xhr = new XMLHttpRequest();
+
+        // Configure the request
+        xhr.open("POST", "offloadData.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        // Set up a callback function to handle the response
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    console.log("Data sent successfully!");
+                } else {
+                    console.error("Error sending data: " + xhr.statusText);
+                }
+            }
+        };
+
+        // Prepare the data to be sent
+        var data = "offloadedData=" + JSON.stringify(offloadedData) + "&offloadedDateTime=" + JSON.stringify(offloadedDateTime);
+
+        // Send the request
+        xhr.send(data);
+    } catch (error) {
+        console.error('Error in offloadDataAndSendRequest:', error);
+    }
+}
+
+// Add an event listener to the "Connect Wearable" button
+document.querySelector('form').addEventListener('submit', function (event) {
     event.stopPropagation();
     event.preventDefault();
 
     if (isWebBluetoothEnabled()) {
-      ChromeSamples.clearLog();
-      offloadData();
+        ChromeSamples.clearLog();
+        offloadDataAndSendRequest();
     }
-  });
+});
+
+
 
 </script>
 

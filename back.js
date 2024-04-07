@@ -13,6 +13,54 @@ let offloadedDataSize = 10;
 let offloadedDateTimeSize = 6;
 let offloadedSessionCountSize = 4;
 let numSessions;
+let offloadedData;
+let offloadedDateTime;
+
+function uint8ArrayToStringArray(uint8Array) {
+  // Define an array to store the resulting strings
+  let stringArray = [];
+
+  // Iterate over each array in the 2D array
+  for (let i = 0; i < uint8Array.length; i++) {
+      let currentArray = uint8Array[i];
+      let string = '';
+
+      // Iterate over each element in the current array
+      for (let j = 0; j < currentArray.length; j++) {
+          // Convert Uint8 value to its corresponding character representation
+          string += String.fromCharCode(currentArray[j]);
+      }
+      stringArray.push(string);
+  }
+
+  return stringArray;
+}
+
+function uint8ArrayToDateTimeArray(uint8Array) {
+  // Define an array to store the resulting datetime strings
+  let dateTimeArray = [];
+
+  // Iterate over each array in the 2D array
+  for (let i = 0; i < uint8Array.length; i++) {
+      let currentArray = uint8Array[i];
+
+      // Extract year, month, day, hour, minute, and second from the current array
+      let year = currentArray[0];
+      let month = currentArray[1];
+      let day = currentArray[2];
+      let hour = currentArray[3];
+      let minute = currentArray[4];
+      let second = currentArray[5];
+
+      // Create a datetime string in the format 'YYYY-MM-DD HH:MM:SS'
+      let datetime = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+
+      // Push the resulting datetime string to the dateTimeArray
+      dateTimeArray.push(datetime);
+  }
+
+  return dateTimeArray;
+}
 
 
 function handleStreamingData(event) {
@@ -31,35 +79,43 @@ function handleStreamingData(event) {
   }
 }
 
-let offloadedData = new Uint8Array(offloadedDataSize);
-function handleOffloadData(event) {
-  let characteristicValue = event.target.value;
-  for (let i = 0; i < offloadedDataSize; i++) {
-    offloadedData[i] = characteristicValue.getUint8(i);
-    log("Offloaded Data:" + offloadedData[i]);
-  }
-}
-
-let offloadedDateTime = new Uint8Array(offloadedDateTimeSize);
-function handleOffloadDateTime(event) {
-  let characteristicValue = event.target.value;
-  for (let i = 0; i < offloadedDateTimeSize; i++) {
-    offloadedDateTime[i] = characteristicValue.getUint8(i);
-    log("Offloaded Datetime:" + offloadedDateTime[i]);
-  }
-}
-
 let offloadedSessionCount = new Uint8Array(offloadedSessionCountSize);
 function handleOffloadSessionCount(event) {
   let characteristicValue = event.target.value;
   for (let i = 0; i < offloadedSessionCountSize; i++) {
     offloadedSessionCount[i] = characteristicValue.getUint8(i);
   }
-  let numSessions = offloadedSessionCount[0] + (offloadedSessionCount[1] * 100) + 
-    (offloadedSessionCount[2] * 10000) + (offloadedSessionCount[3] * 1000000);
+  numSessions = (offloadedSessionCount[0] + (offloadedSessionCount[1] * 100) + 
+    (offloadedSessionCount[2] * 10000) + (offloadedSessionCount[3] * 1000000)) / (offloadedDataSize + offloadedDateTimeSize);
   log("Offloaded Session Count: " + numSessions);
 }
 
+
+function handleOffloadData(event) {
+  offloadedData = [];
+  let characteristicValue = event.target.value;
+  for (let session = 0; session < numSessions; session++) {
+    offloadedData[session] = [];
+    for (let i = 0; i < offloadedDataSize; i++) {
+      offloadedData[session][i] = characteristicValue.getUint8(i + (session * offloadedDataSize));
+      log("Offloaded Data:" + offloadedData[session][i]);
+    }
+  }
+  offloadedData = uint8ArrayToStringArray(offloadedData);
+}
+
+function handleOffloadDateTime(event) {
+  offloadedDateTime = [];
+  let characteristicValue = event.target.value;
+  for (let session = 0; session < numSessions; session++) {
+    offloadedDateTime[session] = [];
+    for (let i = 0; i < offloadedDateTimeSize; i++) {
+      offloadedDateTime[session][i] = characteristicValue.getUint8(i + (session * offloadedDateTimeSize));
+      log("Offloaded Datetime:" + offloadedDateTime[session][i]);
+    }
+  }
+  offloadedDateTime = uint8ArrayToDateTimeArray(offloadedDateTime);
+}
 
 async function sendSessionValue(val) {
     try {
