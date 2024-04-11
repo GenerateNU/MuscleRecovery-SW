@@ -33,7 +33,7 @@ if(isset($_POST['username'])) {
             if ($result->num_rows > 0) {
                 // Redirect to user.php
                 if ($username == "admin") {
-                    header("Location: admin.html");
+                    header("Location: admin.php");
                     exit;
                 }
                 else {

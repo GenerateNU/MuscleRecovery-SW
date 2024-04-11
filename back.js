@@ -95,16 +95,9 @@ async function offloadData() {
       ]);
 
       log("Event listeners added");
-
-      // Read the characteristic values after all event listeners have been added
-      await offloadSessionCountChar.readValue();
-      await offloadDataChar.readValue();
-      await offloadDateTimeChar.readValue();
-      connected = true;
   } catch (error) {
       console.error('Bluetooth Error:', error);
   }
-  
 }
 
 
@@ -216,6 +209,7 @@ async function sendSessionValue(val) {
       console.error('Bluetooth Error:', error);
     }
   }
+  
   
 
   // Continuously read the characteristic every second

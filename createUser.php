@@ -72,12 +72,16 @@ if(isset($_POST['newUsername'])) {
             } 
             else {
                 // Prepare a SQL statement to insert a new user with empty placeholder values for dateTime and muscleData
-                $insertSql = "INSERT INTO data (userName, dateTime, muscleData) VALUES (?, '2003-12-29 04:20:00.696969', '0')";
+                $insertSql = "INSERT INTO data (userName, dateTime, muscleData) VALUES (?, ?, ?)";
                 
                 // Using prepared statement to prevent SQL injection
                 if ($insertStmt = $mysqli->prepare($insertSql)) {
+
+                    $date = '24-4-11 2:27:30';
+                    $data = '0,100,110,120,130,140,150,160,170,180';
+
                     // Binding parameters
-                    $insertStmt->bind_param("s", $newUsername);
+                    $insertStmt->bind_param("sss", $newUsername, $date, $data);
                     
                     // Executing the statement
                     if ($insertStmt->execute()) {

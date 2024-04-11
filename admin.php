@@ -54,7 +54,13 @@
   <button type="submit">Offload Data</button>
 </form>
 
+<form id="updateForm" method="POST" action="update_data.php">
+    <button id="showUnassignedSessions">Show Unassigned Sessions</button>
+    <div id="unassignedSessions"></div>
 
+    <!-- Submit button -->
+    <button type="submit">Update Usernames</button>
+</form>
 
 <script>
   var ChromeSamples = {
@@ -118,35 +124,89 @@ document.querySelector('form').addEventListener('submit', function (event) {
     }
 });
 
+document.getElementById('updateForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Create an XMLHttpRequest object
+      var xhr = new XMLHttpRequest();
+
+      // Define the AJAX request
+      xhr.open('POST', 'update_data.php', true);
+
+      // Set up the callback function for when the request completes
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Request was successful
+          // Optionally, display a success message or perform any other action
+        } else {
+          // Request failed
+          console.error('Request failed. Status:', xhr.status);
+        }
+      };
+
+      // Send the form data
+      xhr.send(new FormData(this));
+    });
+
  // Add an event listener to the "Offload Data" button
  document.getElementById('offloadDataForm').addEventListener('submit', function (event) {
     event.preventDefault(); // Prevent the default form submission behavior
 
-    // Create a form element
+    // Accumulate all offloaded data and date-time values into arrays
+    const offloadedDataArray = [];
+    const offloadedDateTimeArray = [];
+
+    for (let session = 0; session < numSessions; session++) {
+        offloadedDataArray.push(JSON.stringify(offloadedData[session]));
+        offloadedDateTimeArray.push(JSON.stringify(offloadedDateTime[session]));
+    }
+
+    // Create a single form element
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = 'offloadData.php';
 
-    // TODO: Only passing in first session
-    for (let session = 0; session < numSessions; session++) {
-      // Create hidden input fields to store offloadedData and offloadedDateTime
-      const offloadedDataInput = document.createElement('input'); // Changed from 'offloadedData' to 'input'
-      offloadedDataInput.type = 'hidden'; // Added type attribute
-      offloadedDataInput.name = 'offloadedData'; // Added name attribute
-      offloadedDataInput.value = JSON.stringify(offloadedData[session]); // Convert offloadedData to JSON string
-      form.appendChild(offloadedDataInput);
+    // Create hidden input fields to store arrays of offloadedData and offloadedDateTime
+    const offloadedDataInput = document.createElement('input');
+    offloadedDataInput.type = 'hidden';
+    offloadedDataInput.name = 'offloadedDataArray';
+    offloadedDataInput.value = JSON.stringify(offloadedDataArray);
+    form.appendChild(offloadedDataInput);
 
-      const offloadedDateTimeInput = document.createElement('input'); // Changed from 'offloadedDateTime' to 'input'
-      offloadedDateTimeInput.type = 'hidden'; // Added type attribute
-      offloadedDateTimeInput.name = 'offloadedDateTime'; // Added name attribute
-      offloadedDateTimeInput.value = JSON.stringify(offloadedDateTime[session]); // Convert offloadedDateTime to JSON string
-      form.appendChild(offloadedDateTimeInput);
+    const offloadedDateTimeInput = document.createElement('input');
+    offloadedDateTimeInput.type = 'hidden';
+    offloadedDateTimeInput.name = 'offloadedDateTimeArray';
+    offloadedDateTimeInput.value = JSON.stringify(offloadedDateTimeArray);
+    form.appendChild(offloadedDateTimeInput);
 
-      // Append the form to the document body and submit it
-      document.body.appendChild(form);
-      form.submit();
-    }
+    // Append the form to the document body and submit it
+    document.body.appendChild(form);
+    form.submit();
 });
+
+document.getElementById('showUnassignedSessions').addEventListener('click', function() {
+    // Create an XMLHttpRequest object
+    var xhr = new XMLHttpRequest();
+
+    // Define the AJAX request
+    xhr.open('GET', 'get_data.php', true);
+
+    // Set up the callback function for when the request completes
+    xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            // Request was successful
+            // Display the response in a div with id "unassignedSessions"
+            document.getElementById('unassignedSessions').innerHTML = xhr.responseText;
+        } else {
+            // Request failed
+            console.error('Request failed. Status:', xhr.status);
+        }
+    };
+
+    // Send the request
+    xhr.send();
+});
+
 
 </script>
 
