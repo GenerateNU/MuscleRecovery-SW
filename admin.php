@@ -125,7 +125,7 @@ document.querySelector('form').addEventListener('submit', function (event) {
 });
 
 document.getElementById('updateForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent default form submission
+      log("HERE");
 
       // Create an XMLHttpRequest object
       var xhr = new XMLHttpRequest();
@@ -185,6 +185,7 @@ document.getElementById('updateForm').addEventListener('submit', function(event)
 });
 
 document.getElementById('showUnassignedSessions').addEventListener('click', function() {
+  event.preventDefault(); // Prevent default form submission
     // Create an XMLHttpRequest object
     var xhr = new XMLHttpRequest();
 
