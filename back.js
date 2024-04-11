@@ -46,9 +46,9 @@ async function streamData() {
     sessionStartChar = characteristics[3];
     log('Characteristics found. Adding event listeners...');
     streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
-    await offloadDataChar.readValue();
-    await offloadDateTimeChar.readValue();//[offloadDataChar, offloadDateTimeChar, streamDataChar]
-    connected = true;
+    //await streamDataChar.readValue();
+    //await offloadDateTimeChar.readValue();//[offloadDataChar, offloadDateTimeChar, streamDataChar]
+      connected = true;
   } catch (error) {
     console.error('Bluetooth Error:', error);
   }
@@ -93,6 +93,11 @@ async function offloadData() {
           offloadDataChar.addEventListener('characteristicvaluechanged', handleOffloadData),
           offloadDateTimeChar.addEventListener('characteristicvaluechanged', handleOffloadDateTime)
       ]);
+      
+      // Read the characteristic values after all event listeners have been added
+      await offloadSessionCountChar.readValue();
+      await offloadDataChar.readValue();
+      await offloadDateTimeChar.readValue();
 
       log("Event listeners added");
   } catch (error) {

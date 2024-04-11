@@ -61,7 +61,7 @@ if ($mysqli->connect_errno) {
     $mysqli->close();
 
     // Redirect to admin page
-    header("Refresh:0; Location: admin.php");
+    header("Location: admin.php");
     exit; // Make sure to exit after redirecting to prevent further script execution
 }
 ?>
