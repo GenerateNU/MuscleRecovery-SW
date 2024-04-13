@@ -5,6 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="description" content="Muscle Recovery Data">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src = "back.js"></script>
@@ -79,11 +80,11 @@ $mysqli->close();
 <!--    Await)</a> sample.</p>-->
 
 <form>
-  <button>Connect Wearable</button>
+  <button type="submit">Offload Data</button>
 </form>
 
 <form>
-<button id="sendButton">Start Session</button>
+<button type="submit" id="sendButton">Start Session</button>
 </form>
 
 <datalist id="services">
@@ -189,8 +190,8 @@ $mysqli->close();
 window.onload = function() {
   var ctx = document.getElementById('myChart').getContext('2d');
   mainChart = new Chart(ctx, mainConfig);
-};
 
+};
 
 </script>
 
@@ -211,24 +212,65 @@ window.onload = function() {
 
 <script>
 
-  document.querySelector('form').addEventListener('submit', function (event) {
-    event.stopPropagation();
-    event.preventDefault();
+document.querySelector('form').addEventListener('submit', function (event) {
+  event.stopPropagation();
+  event.preventDefault();
 
-    if (isWebBluetoothEnabled()) {
-      ChromeSamples.clearLog();
-      streamData();
-    }
-  });
+  if (isWebBluetoothEnabled()) {
+    ChromeSamples.clearLog();
+    offloadData().then(() => {
+        // Accumulate all offloaded data and date-time values into arrays
+      const offloadedDataArray = [];
+      const offloadedDateTimeArray = [];
 
-  // Event listener for button press
-  document.getElementById('sendButton').addEventListener('click', async function(event) {
-    event.preventDefault();
-    console.log("Button pressed");
-    sendSessionValue("yes");
-    sessionRecorded = false;
-    log("pressed");
+      for (let session = 0; session < numSessions; session++) {
+        offloadedDataArray.push(JSON.stringify(offloadedData[session]));
+        offloadedDateTimeArray.push(JSON.stringify(offloadedDateTime[session]));
+      }
+
+      // Create a single form element
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'offloadDataFromUser.php';
+
+    // Create hidden input fields to store arrays of offloadedData and offloadedDateTime
+    const offloadedDataInput = document.createElement('input');
+    offloadedDataInput.type = 'hidden';
+    offloadedDataInput.name = 'offloadedDataArray';
+    offloadedDataInput.value = JSON.stringify(offloadedDataArray);
+    form.appendChild(offloadedDataInput);
+
+    const offloadedDateTimeInput = document.createElement('input');
+    offloadedDateTimeInput.type = 'hidden';
+    offloadedDateTimeInput.name = 'offloadedDateTimeArray';
+    offloadedDateTimeInput.value = JSON.stringify(offloadedDateTimeArray);
+    form.appendChild(offloadedDateTimeInput);
+
+    // Append the form to the document body and submit it
+    document.body.appendChild(form);
+    form.submit();
+      }).catch(error => {
+        console.error('Error sending data to server:', error);
+        // Handle error if data sending fails
+    });
+  }
+});
+
+
+document.getElementById('sendButton').addEventListener('click', function(event) {
+  event.stopPropagation();
+  event.preventDefault();
+  streamData().then(() => {
+  event.preventDefault();
+  console.log("Button pressed");
+  sendSessionValue("yes");
+  sessionRecorded = false;
+  log("pressed");
   });
+});
+
+
+
 </script>
 
 

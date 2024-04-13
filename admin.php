@@ -5,10 +5,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="description" content="Muscle Recovery Data">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
 
   <script src = "back.js"></script>
-
-    <h2>Welcome, ADMIN!</h2>
 
   <script>
     // Retrieve username from URL parameters
@@ -37,6 +36,8 @@
 
 <body>
 
+<h2>Welcome, ADMIN!</h2>
+
 
 <h1>Unidentified Data</h1>
 
@@ -46,17 +47,20 @@
 <!--    Await)</a> sample.</p>-->
 
 <form>
-  <button>Connect Wearable</button>
+  <button type="submit">Connect Wearable</button>
 </form>
 
 <!-- Create User Form -->
-<form id="offloadDataForm" name="offloadDataForm">
+<form type="submit" id="offloadDataForm" name="offloadDataForm">
   <button type="submit">Offload Data</button>
 </form>
 
+
 <form id="updateForm" method="POST" action="update_data.php">
-    <button id="showUnassignedSessions">Show Unassigned Sessions</button>
+    <button type="submit" id="showUnassignedSessions">Show Unassigned Sessions</button>
     <div id="unassignedSessions"></div>
+
+    <div style="margin-top: 20px;"></div>
 
     <!-- Submit button -->
     <button type="submit">Update Usernames</button>

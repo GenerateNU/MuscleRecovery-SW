@@ -98,7 +98,7 @@ body,html {
 	color: #37404C;
 }
 #content p, ul{
-	color:#6B6B6B;
+	color:#ffffff;
 	font-size:13px;
 }
 
@@ -132,6 +132,86 @@ body,html {
 	float:right;
 }
 
+/* style.css */
+
+/* Body styles */
+/* Body styles */
+body {
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+	background-color: #2D649C url('images/background.jpg') repeat-x fixed top;
+	color: white; /* Set text color to white */
+}
+
+/* Container styles */
+.container {
+	max-width: 400px;
+	margin: 50px auto;
+	padding: 20px;
+	background-color: #fff;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Heading styles */
+h2 {
+	text-align: center;
+	color: #ffffff;
+}
+
+/* Form styles */
+form {
+	margin-top: 20px;
+}
+
+
+
+#loginForm input[type="text"] {
+	color: #000; /* Set the text color to black */
+}
+
+#createUserForm input[type="text"] {
+	color: #000; /* Set the text color to black */
+}
+
+label {
+	display: block;
+	margin-bottom: 5px;
+	color: #ffffff;
+}
+
+input[type="text"] {
+	width: calc(100% - 22px);
+	padding: 8px;
+	margin-bottom: 10px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	color: rgb(0, 0, 0); /* Set text color to white */
+}
+
+button[type="submit"] {
+	width: 100%;
+	padding: 10px;
+	background-color: #007bff;
+	color: #fff;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+button[type="submit"]:hover {
+	background-color: #0056b3;
+}
+
+/* Center the form */
+.center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}
+
 
 
 /* PHP info styling */
@@ -144,7 +224,7 @@ table {border-collapse: collapse;}
 .center th { text-align: center !important; }
 td, th { border: 1px solid #000000; font-size: 75%; vertical-align: baseline;}
 h1 {font-size: 150%; color:white;}
-h2 {font-size: 125%;}
+h2 {font-size: 125%; color:white;}
 .p {text-align: left; display:none}
 .e { font-weight: bold; color: #000000;}
 .h {font-weight: bold; color: white;}

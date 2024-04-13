@@ -45,12 +45,13 @@ async function streamData() {
     streamDataChar = characteristics[2];
     sessionStartChar = characteristics[3];
     log('Characteristics found. Adding event listeners...');
-    streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
+    await streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
     //await streamDataChar.readValue();
     //await offloadDateTimeChar.readValue();//[offloadDataChar, offloadDateTimeChar, streamDataChar]
-      connected = true;
+    connected = true;
   } catch (error) {
     console.error('Bluetooth Error:', error);
+    throw error; // Propagate the error to the caller
   }
 }
 
@@ -99,12 +100,44 @@ async function offloadData() {
       await offloadDataChar.readValue();
       await offloadDateTimeChar.readValue();
 
+      await streamData();
+      //streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
+      //connected = true;
+
       log("Event listeners added");
   } catch (error) {
       console.error('Bluetooth Error:', error);
   }
 }
 
+async function sendDataToServer(offloadedDataArray, offloadedDateTimeArray) {
+  try {
+    // Construct the payload to send to the server
+    const payload = {
+      offloadedDataArray: JSON.stringify(offloadedDataArray),
+      offloadedDateTimeArray: JSON.stringify(offloadedDateTimeArray)
+    };
+
+    // Send the payload to the server using fetch or any other appropriate method
+    const response = await fetch('offloadDataFromUser.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // Check if the server response is successful
+    if (!response.ok) {
+      throw new Error('Server responded with error');
+    }
+
+    // Data successfully sent to the server
+    console.log('Data sent to server successfully');
+  } catch (error) {
+    throw new Error('Error sending data to server: ' + error.message);
+  }
+}
 
 function uint8ArrayToStringArray(uint8Array) {
   // Define an array to store the resulting strings
