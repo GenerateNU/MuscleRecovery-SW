@@ -71,6 +71,42 @@ $mysqli->close();
 
 ?>
 
+<?php
+// Retrieve username from URL parameters
+$user = $_GET['username'];
+
+// Database connection parameters
+$host = "localhost";
+$username = "root";
+$password = "usbw";
+$database = "test";
+
+// Establishing connection to the database
+$mysqli = new mysqli($host, $username, $password, $database);
+
+if ($mysqli->connect_errno) {
+    echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+} else {
+    $sql = "SELECT dateTime, muscleData FROM data WHERE userName = '$user'";
+    $result = $mysqli->query($sql);
+
+    $muscleDataArray = [];
+    $dateTimeArray = [];
+
+    if ($result->num_rows > 0) {
+        // Fetch data and parse muscleData string into an array
+        while ($row = $result->fetch_assoc()) {
+            $muscleData = explode(',', $row["muscleData"]);
+            $muscleDataArray[] = $muscleData;
+            $dateTimeArray[] = $row["dateTime"];
+        }
+    }
+
+    // Closing the database connection
+    $mysqli->close();
+}
+?>
+
 
 <h1>Muscle Recovery Data</h1>
 
@@ -95,6 +131,7 @@ $mysqli->close();
 
 <script>
   var ChromeSamples = {
+
     log: function () {
       var line = Array.prototype.slice.call(arguments).map(function (argument) {
         return typeof argument === 'string' ? argument : JSON.stringify(argument);
@@ -132,13 +169,8 @@ $mysqli->close();
   <!-- Main Graph -->
   <div style="width:70%;">
       <canvas id="myChart"></canvas>
-  </div>
+      <canvas id="muscleDataChart" width="400" height="400"></canvas>
 
-  <!-- Side Column with Smaller Graphs -->
-  <div style="width:20%;">
-      <canvas id="smallGraph1" style="margin-bottom:10px;"></canvas>
-      <canvas id="smallGraph2" style="margin-bottom:10px;"></canvas>
-      <canvas id="smallGraph3"></canvas>
   </div>
 </div>
 
@@ -155,13 +187,18 @@ $mysqli->close();
             data: []
         }]
     };
-
     // Configuration for the main graph
     var mainConfig = {
         type: 'line',
         data: mainData,
         options: {
             scales: {
+                x: {
+                    title: {
+                      display: true,
+                            text: 'Seconds'
+                  }
+                },
                 y: {
                     title: {
                         display: true,
@@ -185,18 +222,122 @@ $mysqli->close();
         }
     };
 
+    var muscleDataChart;
+
 
     // Create the chart
 window.onload = function() {
   var ctx = document.getElementById('myChart').getContext('2d');
   mainChart = new Chart(ctx, mainConfig);
 
+    // Parse muscleData and dateTime arrays from PHP into JavaScript
+  var muscleDataArray = <?php echo json_encode($muscleDataArray); ?>;
+  var dateTimeArray = <?php echo json_encode($dateTimeArray); ?>;
+
+  // Extract the labels and data for the chart
+  var muscleDataLabels = dateTimeArray;
+  var muscleDataValues = muscleDataArray;
+
+  log (muscleDataLabels);
+log (muscleDataValues);
+// Manipulated arrays
+var manipulatedDatetimeArray = [];
+var manipulatedMuscleDataArray = [];
+
+// Iterate over each set of muscle data
+for (var j = 0; j < muscleDataLabels.length; j++) {
+    var initialDatetime = muscleDataLabels[j];
+    var originalMuscleData = muscleDataArray[j];
+
+    // Iterate over the muscle data values
+    for (var i = 0; i < originalMuscleData.length; i++) {
+        var parts = initialDatetime.split(' ');
+        var datePart = parts[0];
+        var timePart = parts[1];
+        var timeParts = timePart.split(':');
+        var hour = parseInt(timeParts[0]);
+        var minute = parseInt(timeParts[1]);
+        var second = parseInt(timeParts[2].split('.')[0]);
+
+        second += i;
+
+        if (second >= 60) {
+            second -= 60;
+            minute++;
+        }
+        if (minute >= 60) {
+            minute -= 60;
+            hour++;
+        }
+
+        var newDatetime = datePart + ' ' +
+            hour.toString().padStart(2, '0') + ':' +
+            minute.toString().padStart(2, '0') + ':' +
+            second.toString().padStart(2, '0') + '.' +
+            '000000';
+
+        manipulatedDatetimeArray.push(newDatetime);
+    }
+}
+
+var flattenedArray = muscleDataValues.flat().map(function(value) {
+    return parseInt(value);
+});
+manipulatedMuscleDataArray = flattenedArray;
+
+
+
+  // Create a chart context
+  var ctx2 = document.getElementById('muscleDataChart').getContext('2d');
+
+  // log(prevData.labels);
+  // log(prevData.datasets[0].data);
+
+  muscleDataChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+        labels: manipulatedDatetimeArray,
+        datasets: [{
+            label: 'Session',
+            backgroundColor: 'rgb(255, 99, 132)',
+            borderColor: 'rgb(255, 99, 132)',
+            data: manipulatedMuscleDataArray
+        }]
+    },
+        options: {
+            scales: {
+              x: {
+                    title: {
+                      display: true,
+                            text: 'Datetimes'
+                  }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'EMG Signal Value'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Previous Session Data',
+                    position: 'top',
+                    font: {
+                        size: 32
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
 };
 
-</script>
 
-
-<script>
   log = ChromeSamples.log;
 
   function isWebBluetoothEnabled() {
