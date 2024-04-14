@@ -12,14 +12,12 @@ if ($mysqli->connect_errno) {
     echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
 } else {
     // Function to insert data into the database
-    function insertDataIntoDatabase($mysqli, $offloadedData, $offloadedDateTime) {
+    function insertDataIntoDatabase($mysqli, $username, $offloadedData, $offloadedDateTime) {
         // Prepare a SQL statement to insert data
         $insertSql = "INSERT INTO data (userName, dateTime, muscleData) VALUES (?, ?, ?)";
 
         // Using prepared statement to prevent SQL injection
         if ($insertStmt = $mysqli->prepare($insertSql)) {
-            // Get data from offloadedData and offloadedDateTime arrays
-            $username = 'Placeholder';
 
             // Binding parameters
             $insertStmt->bind_param("sss", $username, $offloadedDateTime, $offloadedData);
@@ -44,15 +42,11 @@ if ($mysqli->connect_errno) {
         $offloadedDateTimeArray = json_decode($_POST['offloadedDateTimeArray'], true);
         $currentUser = $_POST['currentUser'];
 
-        // Loop through each array and insert data into the database
-        for ($i = 0; $i < count($offloadedDataArray); $i++) {
-            // Decode each JSON string to restore the original data
-            $offloadedData = json_decode($offloadedDataArray[$i]);
-            $offloadedDateTime = json_decode($offloadedDateTimeArray[$i]);
-
-            // Insert data into the database
-            insertDataIntoDatabase($mysqli, $offloadedData, $offloadedDateTime);
-        }
+        // echo $offloadedDataArray;
+        // echo $offloadedDateTimeArray;
+        // echo $currentUser;
+        // Insert data into the database
+        insertDataIntoDatabase($mysqli, $currentUser, $offloadedDataArray, $offloadedDateTimeArray);
 
         // Redirect back to the user page with the username as a parameter
         header("Location: user.php?username=" . urlencode($currentUser));

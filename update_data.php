@@ -40,6 +40,7 @@ if ($mysqli->connect_errno) {
         echo "Data updated successfully.";
     }
 
+    header('index.html');
     // Closing the database connection
     $mysqli->close();
 }

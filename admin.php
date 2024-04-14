@@ -94,11 +94,7 @@
   };
 </script>
 
-<div id="output" class="output">
-  <div id="content"></div>
-  <div id="status"></div>
   <pre id="log"></pre>
-</div>
 
 
 <script>

@@ -15,10 +15,11 @@
   <script>
     // Retrieve username from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const username = urlParams.get('username');
+    username = urlParams.get('username');
 
     // Display the username on the page
     document.getElementById('username').textContent = username;
+    userDoc = document;
   </script>
 
   <title>Muscle Recovery Data</title>
@@ -128,6 +129,8 @@ if ($mysqli->connect_errno) {
   <option value="Measurement_array">measurementArray</option>
 </datalist>
 
+  <pre id="log"></pre>
+
 
 <script>
   var ChromeSamples = {
@@ -158,13 +161,6 @@ if ($mysqli->connect_errno) {
   };
 </script>
 
-<h3>Live Output</h3>
-<div id="output" class="output">
-  <div id="content"></div>
-  <div id="status"></div>
-  <pre id="log"></pre>
-</div>
-
 <div style="display:flex; justify-content: space-between; width:90%; margin:auto;">
   <!-- Main Graph -->
   <div style="width:70%;">
@@ -182,9 +178,9 @@ if ($mysqli->connect_errno) {
         labels: mainLabels,
         datasets: [{
             label: 'Session',
-            backgroundColor: 'rgb(255, 99, 132)',
-            borderColor: 'rgb(255, 99, 132)',
-            data: []
+            backgroundColor: 'White',
+            borderColor: 'White',
+            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         }]
     };
     // Configuration for the main graph
@@ -195,19 +191,22 @@ if ($mysqli->connect_errno) {
             scales: {
                 x: {
                     title: {
+                      color: 'White',
                       display: true,
-                            text: 'Seconds'
+                      text: 'Seconds'
                   }
                 },
                 y: {
                     title: {
-                        display: true,
-                        text: 'EMG Signal Value'
+                      color: 'White',
+                      display: true,
+                      text: 'EMG Signal Value'
                     }
                 }
             },
             plugins: {
                 title: {
+                    color: 'White',
                     display: true,
                     text: 'Session Data',
                     position: 'top',
@@ -238,8 +237,6 @@ window.onload = function() {
   var muscleDataLabels = dateTimeArray;
   var muscleDataValues = muscleDataArray;
 
-  log (muscleDataLabels);
-log (muscleDataValues);
 // Manipulated arrays
 var manipulatedDatetimeArray = [];
 var manipulatedMuscleDataArray = [];
@@ -286,6 +283,15 @@ var flattenedArray = muscleDataValues.flat().map(function(value) {
 manipulatedMuscleDataArray = flattenedArray;
 
 
+// Zip the two arrays together
+let zippedData = manipulatedMuscleDataArray.map((value, index) => [value, manipulatedDatetimeArray[index]]);
+
+// Sort based on the datetime in ascending order
+zippedData.sort((a, b) => new Date(a[1]) - new Date(b[1]));
+
+// Unzip the sorted data
+let sortedMuscleDataArray = zippedData.map(([value, _]) => value);
+let sortedDateTime = zippedData.map(([_, datetime]) => datetime);
 
   // Create a chart context
   var ctx2 = document.getElementById('muscleDataChart').getContext('2d');
@@ -296,24 +302,26 @@ manipulatedMuscleDataArray = flattenedArray;
   muscleDataChart = new Chart(ctx2, {
         type: 'line',
         data: {
-        labels: manipulatedDatetimeArray,
+        labels: sortedDateTime,
         datasets: [{
             label: 'Session',
-            backgroundColor: 'rgb(255, 99, 132)',
-            borderColor: 'rgb(255, 99, 132)',
-            data: manipulatedMuscleDataArray
+            backgroundColor: 'White',
+            borderColor: 'White',
+            data: sortedMuscleDataArray
         }]
     },
         options: {
             scales: {
               x: {
                     title: {
+                      color: 'White',
                       display: true,
-                            text: 'Datetimes'
+                      text: 'Datetimes'
                   }
                 },
                 y: {
                     title: {
+                        color: 'White',
                         display: true,
                         text: 'EMG Signal Value'
                     }
@@ -321,6 +329,7 @@ manipulatedMuscleDataArray = flattenedArray;
             },
             plugins: {
                 title: {
+                  color: 'White',
                     display: true,
                     text: 'Previous Session Data',
                     position: 'top',
@@ -380,12 +389,21 @@ document.querySelector('form').addEventListener('submit', function (event) {
     offloadedDataInput.name = 'offloadedDataArray';
     offloadedDataInput.value = JSON.stringify(offloadedDataArray);
     form.appendChild(offloadedDataInput);
+    log(offloadedDataArray);
 
     const offloadedDateTimeInput = document.createElement('input');
     offloadedDateTimeInput.type = 'hidden';
     offloadedDateTimeInput.name = 'offloadedDateTimeArray';
     offloadedDateTimeInput.value = JSON.stringify(offloadedDateTimeArray);
     form.appendChild(offloadedDateTimeInput);
+    log(offloadedDateTimeArray);
+
+    // Create hidden input field for current user
+    const currentUserInput = document.createElement('input');
+    currentUserInput.type = 'hidden';
+    currentUserInput.name = 'currentUser';
+    currentUserInput.value = username;
+    form.appendChild(currentUserInput);
 
     // Append the form to the document body and submit it
     document.body.appendChild(form);
@@ -399,14 +417,13 @@ document.querySelector('form').addEventListener('submit', function (event) {
 
 
 document.getElementById('sendButton').addEventListener('click', function(event) {
+  sessionRecorded = false;
   event.stopPropagation();
   event.preventDefault();
   streamData().then(() => {
   event.preventDefault();
   console.log("Button pressed");
   sendSessionValue("yes");
-  sessionRecorded = false;
-  log("pressed");
   });
 });
 

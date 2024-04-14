@@ -1,6 +1,6 @@
 let index = 0;
 let sessionLengthInSeconds = 10;
-let mydata = [];
+let mydata = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 let sessionRecorded = true;
 let connected = false;
 let device, server, service, characteristics;
@@ -15,6 +15,8 @@ let offloadedSessionCountSize = 4;
 let numSessions;
 let offloadedData;
 let offloadedDateTime;
+let username;
+let userDoc;
 
 async function streamData() {
   let filters = [
@@ -100,7 +102,7 @@ async function offloadData() {
       await offloadDataChar.readValue();
       await offloadDateTimeChar.readValue();
 
-      await streamData();
+      //await streamData();
       //streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
       //connected = true;
 
@@ -184,30 +186,85 @@ function uint8ArrayToDateTimeArray(uint8Array) {
 
 function handleStreamingData(event) {
   if (event.target.value.byteLength > 0) {
-      mydata[index] = event.target.value.getUint8(0); //loads data for a second
-      log("index:" + index + ", Data:" + mydata[index]);
-      index++;
-      if (index == sessionLengthInSeconds) {
-          index = 0;
-          log('Data From this 10 seconds Session: ');
-          mainChart.data.datasets[0].data = mydata;
-          mainChart.update();
-          mydata = [];
-          sessionRecorded = true;
-      }
+    mydata[index] = event.target.value.getUint8(0); // Load data for a second
+    log("Index:" + index + ", Data:" + mydata[index]);
+    index++;
+    mainChart.data.datasets[0].data = mydata;
+    mainChart.update();
+    if (index == sessionLengthInSeconds) {
+      sessionRecorded = true;
+      index = 0;
+      log('Data From this 10 seconds Session: ');
+
+      event.stopPropagation();
+      event.preventDefault();
+      ChromeSamples.clearLog();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const username = urlParams.get('username');
+
+      // Get the current datetime
+      const currentDatetime = new Date();
+
+      // Format the datetime string
+      let formattedDatetime = 
+        currentDatetime.getFullYear() + '-' +
+        ('0' + (currentDatetime.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + currentDatetime.getDate()).slice(-2) + ' ' +
+        ('0' + currentDatetime.getHours()).slice(-2) + ':' +
+        ('0' + currentDatetime.getMinutes()).slice(-2) + ':' +
+        ('0' + currentDatetime.getSeconds()).slice(-2) + '.' +
+        ('00000' + currentDatetime.getMilliseconds()).slice(-6);
+
+      // Format the offloaded data as a comma-separated string enclosed in double quotes
+      const formattedData = '"' + mydata.join(',') + '"';
+
+      // Create a single form element
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'insertStreamedData.php';
+
+      // Create hidden input fields to store formatted offloaded data and date-time
+      const offloadedDataInput = document.createElement('input');
+      offloadedDataInput.type = 'hidden';
+      offloadedDataInput.name = 'offloadedDataArray';
+      offloadedDataInput.value = formattedData;
+      form.appendChild(offloadedDataInput);
+
+      // Create hidden input field for formatted date-time
+      const offloadedDateTimeInput = document.createElement('input');
+      offloadedDateTimeInput.type = 'hidden';
+      offloadedDateTimeInput.name = 'offloadedDateTimeArray';
+      offloadedDateTimeInput.value = JSON.stringify(formattedDatetime);
+      form.appendChild(offloadedDateTimeInput);
+
+      // Create hidden input field for current user
+      const currentUserInput = document.createElement('input');
+      currentUserInput.type = 'hidden';
+      currentUserInput.name = 'currentUser';
+      currentUserInput.value = username;
+      form.appendChild(currentUserInput);
+
+      // Append the form to the document body and submit it
+      document.body.appendChild(form);
+      form.submit();
+      mydata = [];
+    }
   }
 }
 
-let offloadedSessionCount = new Uint8Array(offloadedSessionCountSize);
-function handleOffloadSessionCount(event) {
-  let characteristicValue = event.target.value;
-  for (let i = 0; i < offloadedSessionCountSize; i++) {
-    offloadedSessionCount[i] = characteristicValue.getUint8(i);
-  }
-  numSessions = (offloadedSessionCount[0] + (offloadedSessionCount[1] * 100) + 
-    (offloadedSessionCount[2] * 10000) + (offloadedSessionCount[3] * 1000000)) / (offloadedDataSize + offloadedDateTimeSize);
-  log("Offloaded Session Count: " + numSessions);
-}
+
+
+    let offloadedSessionCount = new Uint8Array(offloadedSessionCountSize);
+    function handleOffloadSessionCount(event) {
+      let characteristicValue = event.target.value;
+      for (let i = 0; i < offloadedSessionCountSize; i++) {
+        offloadedSessionCount[i] = characteristicValue.getUint8(i);
+      }
+      numSessions = (offloadedSessionCount[0] + (offloadedSessionCount[1] * 100) + 
+        (offloadedSessionCount[2] * 10000) + (offloadedSessionCount[3] * 1000000)) / (offloadedDataSize + offloadedDateTimeSize);
+      log("Offloaded Session Count: " + numSessions);
+    }
 
 
 function handleOffloadData(event) {
@@ -253,9 +310,8 @@ async function sendSessionValue(val) {
   // Continuously read the characteristic every second
 setInterval(() => {
     sendSessionValue("no");
-    if (streamDataChar && mydata.length < sessionLengthInSeconds && !sessionRecorded) {
+    if (!sessionRecorded) {
         streamDataChar.readValue()
-            .then(handleStreamingData)
             .catch(error => {
                 console.error('Error reading characteristic:', error);
             });
