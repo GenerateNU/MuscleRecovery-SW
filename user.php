@@ -42,37 +42,6 @@
 <body>
 
 <?php
-
-$host = "localhost";
-$username = "root";
-$user_pass = "usbw";
-$database_in_use = "test";
-
-$mysqli = new mysqli($host, $username, $user_pass, $database_in_use);
-
-if ($mysqli->connect_errno) {
-   echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
-}
-
-echo $mysqli->host_info . "\n";
-
-
-$sql = "SELECT userName, muscleData, dateTime FROM data";
-$result = $mysqli->query($sql);
-
-if ($result->num_rows > 0) {
-  // output data of each row
-  while($row = $result->fetch_assoc()) {
-    echo "userName: " . $row["userName"]. " - muscleData: " . $row["muscleData"]. " " . $row["dateTime"]. "<br>";
-  }
-} else {
-  echo "0 results";
-}
-$mysqli->close();
-
-?>
-
-<?php
 // Retrieve username from URL parameters
 $user = $_GET['username'];
 
@@ -98,8 +67,13 @@ if ($mysqli->connect_errno) {
         // Fetch data and parse muscleData string into an array
         while ($row = $result->fetch_assoc()) {
             $muscleData = explode(',', $row["muscleData"]);
-            $muscleDataArray[] = $muscleData;
-            $dateTimeArray[] = $row["dateTime"];
+            if ($muscleData == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) {
+
+            }
+            else {
+              $muscleDataArray[] = $muscleData;
+              $dateTimeArray[] = $row["dateTime"];
+            }
         }
     }
 
@@ -123,6 +97,20 @@ if ($mysqli->connect_errno) {
 <form>
 <button type="submit" id="sendButton">Start Session</button>
 </form>
+
+<div style="margin-top: 20px;"></div>
+
+<!-- Add this button wherever you want on the user.php page -->
+<button type="submit" onclick="redirectToLoginPage()">Go back to Login Page</button>
+
+<script>
+  // JavaScript function to redirect to the login page
+  function redirectToLoginPage() {
+    // Replace 'login.php' with the actual URL of your login page
+    window.location.href = 'index.html';
+  }
+</script>
+
 
 <datalist id="services">
   <option value="Timestamp">timestamp</option>
@@ -185,41 +173,47 @@ if ($mysqli->connect_errno) {
     };
     // Configuration for the main graph
     var mainConfig = {
-        type: 'line',
-        data: mainData,
-        options: {
-            scales: {
-                x: {
-                    title: {
-                      color: 'White',
-                      display: true,
-                      text: 'Seconds'
-                  }
+    type: 'line',
+    data: mainData,
+    options: {
+        scales: {
+            x: {
+                title: {
+                    color: 'white', // Set x-axis title color to white
+                    display: true,
+                    text: 'Seconds'
                 },
-                y: {
-                    title: {
-                      color: 'White',
-                      display: true,
-                      text: 'EMG Signal Value'
-                    }
+                ticks: {
+                    color: 'white' // Set x-axis ticks color to white
                 }
             },
-            plugins: {
+            y: {
                 title: {
-                    color: 'White',
+                    color: 'white', // Set y-axis title color to white
                     display: true,
-                    text: 'Session Data',
-                    position: 'top',
-                    font: {
-                        size: 32
-                    }
+                    text: 'EMG Signal Value'
                 },
-                legend: {
-                    display: false
+                ticks: {
+                    color: 'white' // Set y-axis ticks color to white
                 }
             }
+        },
+        plugins: {
+            title: {
+                color: 'White',
+                display: true,
+                text: 'Session Data',
+                position: 'top',
+                font: {
+                    size: 32
+                }
+            },
+            legend: {
+                display: false
+            }
         }
-    };
+    }
+};
 
     var muscleDataChart;
 
@@ -305,8 +299,9 @@ let sortedDateTime = zippedData.map(([_, datetime]) => datetime);
         labels: sortedDateTime,
         datasets: [{
             label: 'Session',
-            backgroundColor: 'White',
-            borderColor: 'White',
+            color: 'white',
+            backgroundColor: 'white',
+            borderColor: 'white',
             data: sortedMuscleDataArray
         }]
     },
@@ -314,22 +309,28 @@ let sortedDateTime = zippedData.map(([_, datetime]) => datetime);
             scales: {
               x: {
                     title: {
-                      color: 'White',
+                      color: 'white',
                       display: true,
                       text: 'Datetimes'
-                  }
+                  },
+                ticks: {
+                    color: 'white' // Set y-axis ticks color to white
+                }
                 },
                 y: {
                     title: {
-                        color: 'White',
+                        color: 'white',
                         display: true,
                         text: 'EMG Signal Value'
-                    }
+                    },
+                ticks: {
+                    color: 'white' // Set y-axis ticks color to white
+                }
                 }
             },
             plugins: {
                 title: {
-                  color: 'White',
+                  color: 'white',
                     display: true,
                     text: 'Previous Session Data',
                     position: 'top',

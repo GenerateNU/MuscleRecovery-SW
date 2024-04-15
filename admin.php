@@ -65,6 +65,16 @@
     <!-- Submit button -->
     <button type="submit">Update Usernames</button>
 </form>
+<div style="margin-top: 20px;"></div>
+<button type="submit" onclick="redirectToLoginPage()">Go back to Login Page</button>
+
+<script>
+  // JavaScript function to redirect to the login page
+  function redirectToLoginPage() {
+    // Replace 'login.php' with the actual URL of your login page
+    window.location.href = 'index.html';
+  }
+</script>
 
 <script>
   var ChromeSamples = {
