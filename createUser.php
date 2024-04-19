@@ -78,7 +78,7 @@ if(isset($_POST['newUsername'])) {
                 if ($insertStmt = $mysqli->prepare($insertSql)) {
 
                     $date = '24-4-11 2:27:30';
-                    $data = '0,0,0,0,0,0,0,0,0,0';
+                    $data = '0,100,110,120,130,140,150,160,170,180';
 
                     // Binding parameters
                     $insertStmt->bind_param("sss", $newUsername, $date, $data);

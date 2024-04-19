@@ -36,12 +36,12 @@ if ($mysqli->connect_errno) {
         // Close the prepared statement
         $updateStmt->close();
 
-        header('Location: admin.php');
-        exit;
+        // Output a success message
+        echo "Data updated successfully.";
     }
 
+    header('index.html');
     // Closing the database connection
     $mysqli->close();
-
 }
 ?>
