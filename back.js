@@ -8,6 +8,7 @@ let offloadDataChar;
 let offloadDateTimeChar;
 let streamDataChar;
 let sessionStartChar;
+let sendDateTimeChar;
 let offloadSessionCountChar;
 let offloadedDataSize = 10;
 let offloadedDateTimeSize = 6;
@@ -40,12 +41,14 @@ async function streamData() {
         service.getCharacteristic("f392f003-1c58-4017-9e01-bf89c7eb53bd"), // Offload Data
         service.getCharacteristic("a5b17d6a-68e5-4f33-abe0-e393e4cd7305"), // Datetime
         service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8"),  // Data
-        service.getCharacteristic("87ffeadd-3d01-45cd-89bd-ec5a6880c009")
+        service.getCharacteristic("87ffeadd-3d01-45cd-89bd-ec5a6880c009"),
+        service.getCharacteristic("cc7d583a-5c96-4299-8f18-3dde34a6b1d7") // setting datetime on esp
     ]);
     offloadDataChar = characteristics[0];
     offloadDateTimeChar = characteristics[1];
     streamDataChar = characteristics[2];
     sessionStartChar = characteristics[3];
+    sendDateTimeChar = characteristics[4];
     log('Characteristics found. Adding event listeners...');
     await streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
     //await streamDataChar.readValue();
@@ -80,13 +83,15 @@ async function offloadData() {
           service.getCharacteristic("a5b17d6a-68e5-4f33-abe0-e393e4cd7305"), // Datetime
           service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8"), // Data
           service.getCharacteristic("87ffeadd-3d01-45cd-89bd-ec5a6880c009"),
-          service.getCharacteristic("630f3455-b378-4b93-8cf5-79225891f94c") // Offload session count
+          service.getCharacteristic("630f3455-b378-4b93-8cf5-79225891f94c"), // Offload session count
+          service.getCharacteristic("cc7d583a-5c96-4299-8f18-3dde34a6b1d7") // setting datetime on esp
       ]);
       offloadDataChar = characteristics[0];
       offloadDateTimeChar = characteristics[1];
       streamDataChar = characteristics[2];
       sessionStartChar = characteristics[3];
       offloadSessionCountChar = characteristics[4];
+      sendDateTimeChar = characteristics[5];
       log('Characteristics found. Adding event listeners...');
 
       // Add event listeners for characteristics
@@ -101,6 +106,8 @@ async function offloadData() {
       await offloadSessionCountChar.readValue();
       await offloadDataChar.readValue();
       await offloadDateTimeChar.readValue();
+
+      await sendDatetime();
 
       //await streamData();
       //streamDataChar.addEventListener('characteristicvaluechanged', handleStreamingData);
@@ -305,7 +312,32 @@ async function sendSessionValue(val) {
     }
   }
   
-  
+async function sendDatetime() {
+    try {
+        const now = new Date();
+        const year = now.getFullYear() - 2000; // Only keep the last two digits of the year
+        const month = now.getMonth() + 1; // Months are zero-based, so add 1
+        const day = now.getDate();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+
+        // Create a Uint8Array with the individual components
+        const datetimeArray = new Uint8Array([year, month, day, hours, minutes, seconds]);
+
+        let char = await service.getCharacteristic("cc7d583a-5c96-4299-8f18-3dde34a6b1d7"); // setting datetime on esp
+        
+        // Send the Uint8Array
+        await char.writeValue(datetimeArray);
+
+        // Log the formatted datetime
+        const formattedDatetime = formatDate(now);
+        log(formattedDatetime);
+    } catch (error) {
+        console.error('Bluetooth Error:', error);
+    }
+}
+
 
   // Continuously read the characteristic every second
 setInterval(() => {
